@@ -47,6 +47,26 @@ void *malloc(size_t size)
 		/* Woah, found a free block to accomodate requested memory. */
 		header->is_free = 0;
 		pthread_mutex_unlock(&global_malloc_lock);
+
+		/*
+		   header points to the metadata (header_t).
+		
+		   Pointer arithmetic on a header_t* advances by sizeof(header_t) bytes,
+		   not by one byte.
+		
+		   So (header + 1) points immediately after the header, which is where
+		   the usable memory block begins.
+		
+		   Memory layout:
+		
+		   +--------------------+---------------------------+
+		   | header_t metadata  | User accessible memory    |
+		   +--------------------+---------------------------+
+		   ^                    ^
+		   header               header + 1
+		
+		   We hide the metadata from the caller and return only the usable memory.
+		*/
 		return (void *)(header + 1);
 	}
 
